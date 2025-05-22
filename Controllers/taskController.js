@@ -31,9 +31,24 @@ const createTask = asyncHandler(async (req, res) => {
 
 // GET TASK
 const getTasks = asyncHandler(async (req, res) => {
-  const tasks = await Task.find({ createdBy: req.user.id }).sort({ createdAt: -1 });
-  res.status(200).json(tasks);
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+  const skip = (page - 1) * limit;
+
+  const total = await Task.countDocuments({ createdBy: req.user.id });
+  const tasks = await Task.find({ createdBy: req.user.id })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  res.status(200).json({
+    tasks,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  });
 });
+
 
 // UPDATE TASK
 const updateTask = asyncHandler(async (req, res) => {
